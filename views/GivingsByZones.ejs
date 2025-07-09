@@ -1,0 +1,75 @@
+<div class="content-body">
+    <div class="container-fluid">
+        <div class="element-area">
+            <div class="container-fluid pt-0 ps-0 pe-lg-4 pe-0">
+                <div class="row">
+                    <!-- Zone-based Analysis -->
+                    <div class="col-xl-12">
+                        <div class="card dz-card">
+                            <div class="card-header flex-wrap d-flex justify-content-between">
+                                <div>
+                                    <h4 class="card-title">Givings by Zones (Approved Campaigns Only)</h4>
+                                    <p class="mb-0">Zone-based analysis with detailed mapping</p>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table id="example2" class="display" style="width:100%">
+                                        <thead>
+                                            <tr>
+                                                <th>Zone ID</th>
+                                                <th>Zone Name</th>
+                                                <th>Zone Reference</th>
+                                                <th>Total Givings</th>
+                                                <th>Campaign Count</th>
+                                                <th>Currency</th>
+                                                <th>Average Campaign Cost</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <% givingsByZones.forEach(function(zone) { %>
+                                                <tr>
+                                                    <td><%= zone.zoneId %></td>
+                                                    <td><%= zone.zone_name %></td>
+                                                    <td><%= zone.zone_ref %></td>
+                                                    <td><%= Number(zone.total_givings).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
+                                                    <td><%= zone.campaign_count %></td>
+                                                    <td><%= zone.currency %></td>
+                                                    <td><%= Number(zone.avg_campaign_cost).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
+                                                </tr>
+                                            <% }) %>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="pagination-controls mt-3">
+                                    <% if (pagination && pagination.totalPages > 1) { %>
+                                        <nav>
+                                            <ul class="pagination">
+                                                <% for (let i = 1; i <= pagination.totalPages; i++) { %>
+                                                    <li class="page-item <%= i === pagination.currentPage ? 'active' : '' %>">
+                                                        <a class="page-link" href="?page=<%= i %>&limit=<%= pagination.limit %>"><%= i %></a>
+                                                    </li>
+                                                <% } %>
+                                            </ul>
+                                        </nav>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+$(document).ready(function() {
+    $('#givingsByZonesTable').DataTable({
+        "processing": true,
+        "serverSide": false,
+        "pageLength": (pagination && pagination.limit) ? pagination.limit : 50,
+        "lengthMenu": [[50, 100, 200, -1], [50, 100, 200, "All"]],
+        "order": [[3, "desc"]]
+    });
+});
+</script>

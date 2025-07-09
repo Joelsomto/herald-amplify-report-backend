@@ -1,0 +1,76 @@
+<div class="content-body">
+    <div class="container-fluid">
+        <div class="element-area">
+            <div class="container-fluid pt-0 ps-0 pe-lg-4 pe-0">
+                <div class="row">
+                    <div class="col-xl-12">
+                        <div class="card dz-card">
+                            <div class="card-header flex-wrap d-flex justify-content-between">
+                                <div>
+                                    <h4 class="card-title">Givings Timeline</h4>
+                                    <p class="mb-0">Chronological view of all giving instances (Approved campaigns only)</p>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table id="example2" class="display" style="width:100%">
+                                        <thead>
+                                            <tr>
+                                                <th>Campaign ID</th>
+                                                <th>Campaign Name</th>
+                                                <th>Amount</th>
+                                                <th>Currency</th>
+                                                <th>Start Date</th>
+                                                <th>Timestamp</th>
+                                                <th>Herald Name</th>
+                                                <th>Zone</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <% givingsTimeline.forEach(function(giving) { %>
+                                                <tr>
+                                                    <td><%= giving.cId %></td>
+                                                    <td><%= giving.campaign_name %></td>
+                                                    <td><%= Number(giving.campaign_cost).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
+                                                    <td><%= giving.currency %></td>
+                                                    <td><%= new Date(giving.campaign_start_date).toLocaleDateString() %></td>
+                                                    <td><%= new Date(giving.timestamp).toLocaleString() %></td>
+                                                    <td><%= giving.herald_name || 'N/A' %></td>
+                                                    <td><%= giving.zone_name || 'N/A' %></td>
+                                                </tr>
+                                            <% }) %>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="pagination-controls mt-3">
+                                    <% if (pagination.totalPages > 1) { %>
+                                        <nav>
+                                            <ul class="pagination">
+                                                <% for (let i = 1; i <= pagination.totalPages; i++) { %>
+                                                    <li class="page-item <%= i === pagination.currentPage ? 'active' : '' %>">
+                                                        <a class="page-link" href="?page=<%= i %>&limit=<%= pagination.limit %>"><%= i %></a>
+                                                    </li>
+                                                <% } %>
+                                            </ul>
+                                        </nav>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+$(document).ready(function() {
+    $('#givingsTimelineTable').DataTable({
+        "processing": true,
+        "serverSide": false,
+        "pageLength": <%= pagination.limit %>,
+        "lengthMenu": [[100, 200, 500, -1], [100, 200, 500, "All"]],
+        "order": [[5, "desc"]]
+    });
+});
+</script> 

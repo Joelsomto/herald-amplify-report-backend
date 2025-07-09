@@ -1,0 +1,16 @@
+<!-- layout -->
+<!DOCTYPE html>
+<html lang="en">
+<%- include('partials/head', { title: title }) %>
+<body>
+    <div id="main-wrapper">
+        <%- include('partials/nav-header') %>
+        <%- include('partials/chatbox') %>
+        <%- include('partials/header') %>
+        <%- include('partials/sidebar') %>
+        <%- body %>
+        <%- include('partials/footer') %>
+    </div>
+    <%- include('partials/scripts') %>
+</body>
+</html> 

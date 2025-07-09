@@ -1,0 +1,53 @@
+
+<div class="content-body">
+    <div class="container-fluid">
+        <div class="element-area">
+            <div class="container-fluid pt-0 ps-0 pe-lg-4 pe-0">
+                <div class="row"></div>
+                <div class="col-xl-12">
+                    <div class="card dz-card" id="accordion-two">
+                        <div class="card-header flex-wrap d-flex justify-content-between">
+                            <div>
+                                <h4 class="card-title">Transaction Breakdown</h4>
+                            </div>
+                        </div>
+                        <div class="tab-content" id="myTabContent-1">
+                            <div class="tab-pane fade show active" id="bordered" role="tabpanel" aria-labelledby="home-tab-1">
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table id="example2" class="display" style="width:100%">
+                                            <thead>
+                                                <tr>
+                                                    <th>Transaction ID</th>
+                                                    <th>Campaign Name</th>
+                                                    <th>Amount</th>
+                                                    <th>Currency</th>
+                                                    <th>Date</th>
+                                                    <th>Status</th>
+                                                    <th>Location</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <% SubscriberTransaction.forEach(function(transaction) { %>
+                                                    <tr>
+                                                        <td><%= transaction.transaction_id %></td>
+                                                        <td><%= transaction.campaign_name %></td>
+                                                        <td><%= Number(transaction.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
+                                                        <td><%= transaction.currency %></td>
+                                                        <td><%= (new Date(transaction.transaction_date)).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) %></td>
+                                                        <td><%= transaction.campaign_status %></td>
+                                                        <td><%= transaction.location %></td>
+                                                    </tr>
+                                                <% }) %>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

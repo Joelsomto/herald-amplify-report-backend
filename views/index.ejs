@@ -1,0 +1,173 @@
+<!-- index.ejs -->
+<div class="content-body">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-xl-3 col-sm-6">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="icon-box icon-box-lg bg-success-light rounded-circle">
+                                <i class="fas fa-bullhorn text-success"></i>
+                            </div>
+                            <div class="total-projects ms-3">
+                                <h3 class="text-success count"><%= totalCampaigns %></h3>
+                                <span>Active Campaigns</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-sm-6">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="icon-box icon-box-lg bg-primary-light rounded-circle">
+                                <i class="fas fa-users  text-primary"></i>
+                            </div>
+                            <div class="total-projects ms-3">
+                                <a href="/subscribers">
+                                    <h3 class="text-primary count"><%= totalSubscribers %></h3>
+                                    <span>Total Subscribers</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-sm-6">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="icon-box icon-box-lg bg-warning-light rounded-circle">
+                                <i class="fas fa-dollar-sign text-warning"></i>
+                            </div>
+                            <div class="total-projects ms-3">
+                                <h3 class="text-warning count"><%= Number(totalApprovedCosts).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></h3>
+                                <span>Total Approved Costs</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-sm-6">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="icon-box icon-box-lg bg-info-light rounded-circle">
+                                <i class="fas fa-chart-line text-info"></i>
+                            </div>
+                            <div class="total-projects ms-3">
+                                <h3 class="text-info count"><%= Number(totalCumulativeGiving).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></h3>
+                                <span>Cumulative Giving</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Campaign Cost Summary -->
+            <div class="col-xl-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">Campaign Cost Summary (Approved Only)</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table id="example2" class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Currency</th>
+                                        <th>Total Cost</th>
+                                        <th>Campaign Count</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% totalCampaignCosts.forEach(function(cost) { %>
+                                        <tr>
+                                            <td><strong><%= cost.currency %></strong></td>
+                                            <td><%= Number(cost.total_cost).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
+                                            <td><%= cost.campaign_count %></td>
+                                        </tr>
+                                    <% }) %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-6">
+                <div class="card">
+                    <div class="card-body p-0">
+                        <div class="table-responsive active-projects">
+                            <div class="tbl-caption">
+                                <h4 class="heading mb-0">Recent Active Campaigns</h4>
+                            </div>
+                            <table id="example2" class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Campaign</th>
+                                        <th>Organizer</th>
+                                        <th>Budget</th>
+                                        <th>Start Date</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% recentCampaigns.forEach(function(campaign) { %>
+                                        <tr>
+                                            <td><%= campaign.campaign_name %></td>
+                                            <td><%= campaign.organizer %></td>
+                                            <td class="pe-0"><%= campaign.currency %> <%= Number(campaign.campaign_cost).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
+                                            <td class="pe-0"><%= (new Date(campaign.campaign_start_date)).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) %></td>
+                                            <td class="pe-0">
+                                                <span class="badge badge-<%= campaign.campaign_status === 'active' ? 'success' : 'warning' %>">
+                                                    <%= campaign.campaign_status.charAt(0).toUpperCase() + campaign.campaign_status.slice(1) %>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="icon-box icon-box-xs bg-primary me-1">
+                                                    <i class="fa-solid fa-eye text-white"></i>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <% }) %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-6">
+                <div class="card">
+                    <div class="card-body p-0">
+                        <div class="table-responsive active-projects">
+                            <div class="tbl-caption">
+                                <h4 class="heading mb-0">Recent Subscribers</h4>
+                            </div>
+                            <table id="example2" class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Country</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% recentSubscribers.forEach(function(subscriber) { %>
+                                        <tr>
+                                            <td><%= subscriber.fullname %></td>
+                                            <td><%= subscriber.email %></td>
+                                            <td><%= subscriber.country %></td>
+                                        </tr>
+                                    <% }) %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,70 @@
+<div class="content-body">
+    <div class="container-fluid">
+        <div class="element-area">
+            <div class="container-fluid pt-0 ps-0 pe-lg-4 pe-0">
+                <div class="row">
+                    <div class="col-xl-12">
+                        <div class="card dz-card">
+                            <div class="card-header flex-wrap d-flex justify-content-between">
+                                <div>
+                                    <h4 class="card-title">Campaign Cost Summary (Approved Only)</h4>
+                                    <p class="mb-0">Summary of campaign costs grouped by cost and currency</p>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table id="example2" class="display" style="width:100%">
+                                        <thead>
+                                            <tr>
+                                                <th> Campaign</th>
+                                                <th>Cost Amount</th>
+                                                <th>Currency</th>
+                                                <th>Total Cost</th>
+                                                <th>Campaign Count</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <% campaignCostSummary.forEach(function(cost) { %>
+                                                <tr>
+                                                    <td><%= cost.campaign_name %></td>
+                                                    <td><%= Number(cost.campaign_cost).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
+                                                    <td><%= cost.currency %></td>
+                                                    <td><%= Number(cost.total_cost).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></td>
+                                                    <td><%= cost.campaign_count %></td>
+                                                </tr>
+                                            <% }) %>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="pagination-controls mt-3">
+                                    <% if (pagination.totalPages > 1) { %>
+                                        <nav>
+                                            <ul class="pagination">
+                                                <% for (let i = 1; i <= pagination.totalPages; i++) { %>
+                                                    <li class="page-item <%= i === pagination.currentPage ? 'active' : '' %>">
+                                                        <a class="page-link" href="?page=<%= i %>&limit=<%= pagination.limit %>"><%= i %></a>
+                                                    </li>
+                                                <% } %>
+                                            </ul>
+                                        </nav>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+$(document).ready(function() {
+    $('#costSummaryTable').DataTable({
+        "processing": true,
+        "serverSide": false,
+        "pageLength": <%= pagination.limit %>,
+        "lengthMenu": [[50, 100, 200, -1], [50, 100, 200, "All"]],
+        "order": [[2, "desc"]]
+    });
+});
+</script> 
