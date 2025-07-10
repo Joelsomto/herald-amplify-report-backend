@@ -5,7 +5,11 @@ const DB_API_URL = 'https://healingstreams.tv/Herald_Amplify/include/db_api.php?
 async function remoteQuery(sql) {
   try {
     const response = await axios.post(DB_API_URL, new URLSearchParams({ sql }), {
-      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      headers: { 
+        'X-Requested-With': 'XMLHttpRequest',
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json'
+      }
     });
     return response.data;
   } catch (error) {
