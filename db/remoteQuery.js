@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const DB_API_URL = 'http://localhost/Herald_Amplify_NodeJS/db_api.php?action=query'; // Change to your actual URL
+const DB_API_URL = 'https://healingstreams.tv/Herald_Amplify/include/db_api.php?action=query';
 //
 async function remoteQuery(sql) {
   try {
