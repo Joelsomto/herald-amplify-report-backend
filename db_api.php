@@ -2,9 +2,9 @@
 header('Content-Type: application/json');
 
 // Database credentials
-$host = "";
-$dbname = "";
-$username = "";
+$host = "localhost";
+$dbname = "healandmir";
+$username = "root";
 $password = "";
 
 // Connect to MySQL

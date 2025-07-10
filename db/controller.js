@@ -97,7 +97,7 @@ const Controller = {
       WHERE approval = 1 
       GROUP BY campaign_cost, currency 
       ORDER BY total_cost DESC
-      LIMIT ? OFFSET ?
+      LIMIT ${limit} OFFSET ${offset}
     `, [limit, offset]);
     return rows;
   },
@@ -131,7 +131,7 @@ const Controller = {
       LEFT JOIN subscribers s ON hc.subscriberId = s.subscriberId
       WHERE hc.approval = 1
       ORDER BY hc.timestamp DESC
-      LIMIT ? OFFSET ?
+      LIMIT ${limit} OFFSET ${offset}
     `, [limit, offset]);
     const zonesData = loadZonesData();
     return rows.map(row => ({
@@ -164,7 +164,7 @@ const Controller = {
       WHERE hc.approval = 1
       GROUP BY hc.zoneId, hc.currency
       ORDER BY total_givings DESC
-      LIMIT ? OFFSET ?
+      LIMIT ${limit} OFFSET ${offset}
     `, [limit, offset]);
     const zonesData = loadZonesData();
     return rows.map(row => ({
@@ -201,7 +201,7 @@ const Controller = {
       WHERE hc.approval = 1
       GROUP BY hc.subscriberId
       ORDER BY cumulative_giving_amount DESC
-      LIMIT ? OFFSET ?
+      LIMIT ${limit} OFFSET ${offset}
     `, [limit, offset]);
     return rows;
   },
@@ -248,7 +248,7 @@ const Controller = {
       LEFT JOIN subscribers s ON hc.subscriberId = s.subscriberId
       WHERE hc.approval = 1
       ORDER BY hc.timestamp ASC
-      LIMIT ? OFFSET ?
+      LIMIT ${limit} OFFSET ${offset}
     `, [limit, offset]);
     const zonesData = loadZonesData();
     return rows.map(row => ({
