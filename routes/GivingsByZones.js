@@ -14,9 +14,11 @@ router.get('/', async (req, res) => {
     ]);
     let zonesMapping = {};
     try {
-      const zonesData = fs.readFileSync(path.join(__dirname, '../zones.json'), 'utf8');
+      const zonesData = fs.readFileSync(path.join(__dirname, '../data/zones_6.json'), 'utf8');
       const zonesJson = JSON.parse(zonesData);
-      zonesMapping = zonesJson.zones.reduce((acc, zone) => {
+      // Parse PHPMyAdmin export format - find the data array
+      const zonesDataArray = zonesJson.find(item => item.type === 'table' && item.name === 'zones')?.data || [];
+      zonesMapping = zonesDataArray.reduce((acc, zone) => {
         acc[zone.zoneId] = zone;
         return acc;
       }, {});

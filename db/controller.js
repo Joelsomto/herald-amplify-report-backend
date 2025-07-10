@@ -1,4 +1,23 @@
 const pool = require('./connection');
+const fs = require('fs');
+const path = require('path');
+
+// Load zones data from JSON file
+function loadZonesData() {
+  try {
+    const zonesData = fs.readFileSync(path.join(__dirname, '../data/zones_6.json'), 'utf8');
+    const zonesJson = JSON.parse(zonesData);
+    // Parse PHPMyAdmin export format - find the data array
+    const zonesDataArray = zonesJson.find(item => item.type === 'table' && item.name === 'zones')?.data || [];
+    return zonesDataArray.reduce((acc, zone) => {
+      acc[zone.zoneId] = zone;
+      return acc;
+    }, {});
+  } catch (err) {
+    console.error('Error loading zones data:', err);
+    return {};
+  }
+}
 
 const Controller = {
   async getTotalCampaigns() {
@@ -30,8 +49,12 @@ const Controller = {
     return rows;
   },
   async getGivingsByZones() {
-    const [rows] = await pool.query(`SELECT z.zone, SUM(hc.campaign_cost) as total_givings, COUNT(hc.cId) as campaign_count, hc.currency FROM herald_campaign hc JOIN zones z ON hc.zoneId = z.zoneId WHERE hc.campaign_cost > 0 GROUP BY hc.zoneId, hc.currency ORDER BY total_givings DESC`);
-    return rows;
+    const [rows] = await pool.query(`SELECT zoneId, SUM(campaign_cost) as total_givings, COUNT(cId) as campaign_count, currency FROM herald_campaign WHERE campaign_cost > 0 GROUP BY zoneId, currency ORDER BY total_givings DESC`);
+    const zonesData = loadZonesData();
+    return rows.map(row => ({
+      ...row,
+      zone: zonesData[row.zoneId]?.zone || 'Unknown Zone'
+    }));
   },
   async getGivingsPerIndividual() {
     const [rows] = await pool.query(`SELECT s.subscriberId, CONCAT(COALESCE(s.firstname, ''), ' ', COALESCE(s.lastname, '')) as donor_name, s.email, hc.currency, SUM(hc.campaign_cost) as total_given, COUNT(hc.cId) as donation_count, MAX(hc.campaign_start_date) as last_donation_date FROM subscribers s JOIN herald_campaign hc ON s.subscriberId = hc.subscriberId WHERE hc.campaign_cost > 0 GROUP BY s.subscriberId, hc.currency ORDER BY s.subscriberId, total_given DESC`);
@@ -42,8 +65,12 @@ const Controller = {
     if (subscriberId) {
       whereClause = `WHERE hc.subscriberId = ?`;
     }
-    const [rows] = await pool.query(`SELECT hc.cId as transaction_id, hc.campaign_name, hc.campaign_cost as amount, hc.currency, hc.campaign_start_date as transaction_date, hc.campaign_status, z.zone as location, CONCAT(s.firstname, ' ', s.lastname) as donor_name FROM herald_campaign hc LEFT JOIN zones z ON hc.zoneId = z.zoneId LEFT JOIN subscribers s ON hc.subscriberId = s.subscriberId ${whereClause} ORDER BY hc.campaign_start_date DESC`, subscriberId ? [subscriberId] : []);
-    return rows;
+    const [rows] = await pool.query(`SELECT hc.cId as transaction_id, hc.campaign_name, hc.campaign_cost as amount, hc.currency, hc.campaign_start_date as transaction_date, hc.campaign_status, hc.zoneId, CONCAT(s.firstname, ' ', s.lastname) as donor_name FROM herald_campaign hc LEFT JOIN subscribers s ON hc.subscriberId = s.subscriberId ${whereClause} ORDER BY hc.campaign_start_date DESC`, subscriberId ? [subscriberId] : []);
+    const zonesData = loadZonesData();
+    return rows.map(row => ({
+      ...row,
+      location: zonesData[row.zoneId]?.zone || 'Unknown Zone'
+    }));
   },
   async getRecentActiveCampaigns() {
     const [rows] = await pool.query(`SELECT hc.cId as campaign_id, hc.campaign_name, hc.campaign_cost, hc.currency, hc.campaign_start_date, hc.campaign_status, CONCAT(COALESCE(s.firstname, ''), ' ', COALESCE(s.lastname, '')) as organizer FROM herald_campaign hc LEFT JOIN subscribers s ON hc.subscriberId = s.subscriberId WHERE hc.campaign_status != '-' AND hc.campaign_start_date > '2000-01-01' ORDER BY hc.campaign_start_date DESC LIMIT 5`);
@@ -99,15 +126,18 @@ const Controller = {
         hc.timestamp,
         CONCAT(COALESCE(s.firstname, ''), ' ', COALESCE(s.lastname, '')) as herald_name,
         s.email as herald_email,
-        z.zone as zone_name
+        hc.zoneId
       FROM herald_campaign hc
       LEFT JOIN subscribers s ON hc.subscriberId = s.subscriberId
-      LEFT JOIN zones z ON hc.zoneId = z.zoneId
       WHERE hc.approval = 1
       ORDER BY hc.timestamp DESC
       LIMIT ? OFFSET ?
     `, [limit, offset]);
-    return rows;
+    const zonesData = loadZonesData();
+    return rows.map(row => ({
+      ...row,
+      zone_name: zonesData[row.zoneId]?.zone || 'Unknown Zone'
+    }));
   },
   
   // Get total count for givings data pagination
@@ -125,21 +155,23 @@ const Controller = {
     const offset = (page - 1) * limit;
     const [rows] = await pool.query(`
       SELECT 
-        z.zoneId,
-        z.zone as zone_name,
-        z.ref as zone_ref,
+        hc.zoneId,
         SUM(hc.campaign_cost) as total_givings,
         COUNT(hc.cId) as campaign_count,
         hc.currency,
         AVG(hc.campaign_cost) as avg_campaign_cost
       FROM herald_campaign hc
-      JOIN zones z ON hc.zoneId = z.zoneId
       WHERE hc.approval = 1
-      GROUP BY hc.zoneId, hc.currency, z.zone, z.ref
+      GROUP BY hc.zoneId, hc.currency
       ORDER BY total_givings DESC
       LIMIT ? OFFSET ?
     `, [limit, offset]);
-    return rows;
+    const zonesData = loadZonesData();
+    return rows.map(row => ({
+      ...row,
+      zone_name: zonesData[row.zoneId]?.zone || 'Unknown Zone',
+      zone_ref: zonesData[row.zoneId]?.ref || 'Unknown'
+    }));
   },
   
   // Get total count for zones pagination
@@ -211,15 +243,18 @@ const Controller = {
         hc.campaign_start_date,
         hc.timestamp,
         CONCAT(COALESCE(s.firstname, ''), ' ', COALESCE(s.lastname, '')) as herald_name,
-        z.zone as zone_name
+        hc.zoneId
       FROM herald_campaign hc
       LEFT JOIN subscribers s ON hc.subscriberId = s.subscriberId
-      LEFT JOIN zones z ON hc.zoneId = z.zoneId
       WHERE hc.approval = 1
       ORDER BY hc.timestamp ASC
       LIMIT ? OFFSET ?
     `, [limit, offset]);
-    return rows;
+    const zonesData = loadZonesData();
+    return rows.map(row => ({
+      ...row,
+      zone_name: zonesData[row.zoneId]?.zone || 'Unknown Zone'
+    }));
   },
   
   // Get total count for timeline pagination
