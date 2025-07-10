@@ -1,4 +1,4 @@
-const pool = require('./connection');
+const remoteQuery = require('./remoteQuery');
 const fs = require('fs');
 const path = require('path');
 
@@ -21,35 +21,35 @@ function loadZonesData() {
 
 const Controller = {
   async getTotalCampaigns() {
-    const [rows] = await pool.query(`SELECT COUNT(*) as total_campaigns FROM herald_campaign WHERE campaign_status = 'active'`);
+    const rows = await remoteQuery(`SELECT COUNT(*) as total_campaigns FROM herald_campaign WHERE campaign_status = 'active'`);
     return rows;
   },
   async getTotalSubscribers() {
-    const [rows] = await pool.query(`SELECT COUNT(*) as total_subscribers FROM subscribers WHERE unsubscribe = 0 AND confirmed = 1`);
+    const rows = await remoteQuery(`SELECT COUNT(*) as total_subscribers FROM subscribers WHERE unsubscribe = 0 AND confirmed = 1`);
     return rows;
   },
   async getSubscribers() {
-    const [rows] = await pool.query(`SELECT subscriberId, CONCAT(COALESCE(firstname, ''), ' ', COALESCE(lastname, '')) as fullname, email, phone, country, timestamp as join_date, confirmed, unsubscribe FROM subscribers WHERE confirmed = 1 ORDER BY timestamp DESC`);
+    const rows = await remoteQuery(`SELECT subscriberId, CONCAT(COALESCE(firstname, ''), ' ', COALESCE(lastname, '')) as fullname, email, phone, country, timestamp as join_date, confirmed, unsubscribe FROM subscribers WHERE confirmed = 1 ORDER BY timestamp DESC`);
     return rows;
   },
   async getSubscribersWithDonations() {
-    const [rows] = await pool.query(`SELECT s.subscriberId, CONCAT(COALESCE(s.firstname, ''), ' ', COALESCE(s.lastname, '')) as fullname, s.email, s.phone, s.country, s.timestamp as join_date, s.unsubscribe, s.confirmed, SUM(COALESCE(hc.campaign_cost, 0)) as total_given, MAX(hc.campaign_start_date) as last_donation_date FROM subscribers s LEFT JOIN herald_campaign hc ON s.subscriberId = hc.subscriberId AND hc.campaign_cost > 0 WHERE s.confirmed = 1 GROUP BY s.subscriberId ORDER BY s.timestamp DESC`);
+    const rows = await remoteQuery(`SELECT s.subscriberId, CONCAT(COALESCE(s.firstname, ''), ' ', COALESCE(s.lastname, '')) as fullname, s.email, s.phone, s.country, s.timestamp as join_date, s.unsubscribe, s.confirmed, SUM(COALESCE(hc.campaign_cost, 0)) as total_given, MAX(hc.campaign_start_date) as last_donation_date FROM subscribers s LEFT JOIN herald_campaign hc ON s.subscriberId = hc.subscriberId AND hc.campaign_cost > 0 WHERE s.confirmed = 1 GROUP BY s.subscriberId ORDER BY s.timestamp DESC`);
     return rows;
   },
   async getAvgClickRate() {
-    const [rows] = await pool.query(`SELECT AVG(clicked/total_reach)*100 as avg_click_rate FROM herald_campaign WHERE total_reach > 0`);
+    const rows = await remoteQuery(`SELECT AVG(clicked/total_reach)*100 as avg_click_rate FROM herald_campaign WHERE total_reach > 0`);
     return rows;
   },
   async newSubscribers() {
-    const [rows] = await pool.query(`SELECT COUNT(*) as new_subscribers FROM subscribers WHERE timestamp >= DATE_SUB(NOW(), INTERVAL 30 DAY) AND confirmed = 1`);
+    const rows = await remoteQuery(`SELECT COUNT(*) as new_subscribers FROM subscribers WHERE timestamp >= DATE_SUB(NOW(), INTERVAL 30 DAY) AND confirmed = 1`);
     return rows;
   },
   async getCumulativeByCurrency() {
-    const [rows] = await pool.query(`SELECT currency, SUM(campaign_cost) as total_amount, COUNT(cId) as transaction_count FROM herald_campaign WHERE campaign_cost > 0 GROUP BY currency ORDER BY total_amount DESC`);
+    const rows = await remoteQuery(`SELECT currency, SUM(campaign_cost) as total_amount, COUNT(cId) as transaction_count FROM herald_campaign WHERE campaign_cost > 0 GROUP BY currency ORDER BY total_amount DESC`);
     return rows;
   },
   async getGivingsByZones() {
-    const [rows] = await pool.query(`SELECT zoneId, SUM(campaign_cost) as total_givings, COUNT(cId) as campaign_count, currency FROM herald_campaign WHERE campaign_cost > 0 GROUP BY zoneId, currency ORDER BY total_givings DESC`);
+    const rows = await remoteQuery(`SELECT zoneId, SUM(campaign_cost) as total_givings, COUNT(cId) as campaign_count, currency FROM herald_campaign WHERE campaign_cost > 0 GROUP BY zoneId, currency ORDER BY total_givings DESC`);
     const zonesData = loadZonesData();
     return rows.map(row => ({
       ...row,
@@ -57,7 +57,7 @@ const Controller = {
     }));
   },
   async getGivingsPerIndividual() {
-    const [rows] = await pool.query(`SELECT s.subscriberId, CONCAT(COALESCE(s.firstname, ''), ' ', COALESCE(s.lastname, '')) as donor_name, s.email, hc.currency, SUM(hc.campaign_cost) as total_given, COUNT(hc.cId) as donation_count, MAX(hc.campaign_start_date) as last_donation_date FROM subscribers s JOIN herald_campaign hc ON s.subscriberId = hc.subscriberId WHERE hc.campaign_cost > 0 GROUP BY s.subscriberId, hc.currency ORDER BY s.subscriberId, total_given DESC`);
+    const rows = await remoteQuery(`SELECT s.subscriberId, CONCAT(COALESCE(s.firstname, ''), ' ', COALESCE(s.lastname, '')) as donor_name, s.email, hc.currency, SUM(hc.campaign_cost) as total_given, COUNT(hc.cId) as donation_count, MAX(hc.campaign_start_date) as last_donation_date FROM subscribers s JOIN herald_campaign hc ON s.subscriberId = hc.subscriberId WHERE hc.campaign_cost > 0 GROUP BY s.subscriberId, hc.currency ORDER BY s.subscriberId, total_given DESC`);
     return rows;
   },
   async getSubscriberTransaction(subscriberId) {
@@ -65,7 +65,7 @@ const Controller = {
     if (subscriberId) {
       whereClause = `WHERE hc.subscriberId = ?`;
     }
-    const [rows] = await pool.query(`SELECT hc.cId as transaction_id, hc.campaign_name, hc.campaign_cost as amount, hc.currency, hc.campaign_start_date as transaction_date, hc.campaign_status, hc.zoneId, CONCAT(s.firstname, ' ', s.lastname) as donor_name FROM herald_campaign hc LEFT JOIN subscribers s ON hc.subscriberId = s.subscriberId ${whereClause} ORDER BY hc.campaign_start_date DESC`, subscriberId ? [subscriberId] : []);
+    const rows = await remoteQuery(`SELECT hc.cId as transaction_id, hc.campaign_name, hc.campaign_cost as amount, hc.currency, hc.campaign_start_date as transaction_date, hc.campaign_status, hc.zoneId, CONCAT(s.firstname, ' ', s.lastname) as donor_name FROM herald_campaign hc LEFT JOIN subscribers s ON hc.subscriberId = s.subscriberId ${whereClause} ORDER BY hc.campaign_start_date DESC`, subscriberId ? [subscriberId] : []);
     const zonesData = loadZonesData();
     return rows.map(row => ({
       ...row,
@@ -73,11 +73,11 @@ const Controller = {
     }));
   },
   async getRecentActiveCampaigns() {
-    const [rows] = await pool.query(`SELECT hc.cId as campaign_id, hc.campaign_name, hc.campaign_cost, hc.currency, hc.campaign_start_date, hc.campaign_status, CONCAT(COALESCE(s.firstname, ''), ' ', COALESCE(s.lastname, '')) as organizer FROM herald_campaign hc LEFT JOIN subscribers s ON hc.subscriberId = s.subscriberId WHERE hc.campaign_status != '-' AND hc.campaign_start_date > '2000-01-01' ORDER BY hc.campaign_start_date DESC LIMIT 5`);
+    const rows = await remoteQuery(`SELECT hc.cId as campaign_id, hc.campaign_name, hc.campaign_cost, hc.currency, hc.campaign_start_date, hc.campaign_status, CONCAT(COALESCE(s.firstname, ''), ' ', COALESCE(s.lastname, '')) as organizer FROM herald_campaign hc LEFT JOIN subscribers s ON hc.subscriberId = s.subscriberId WHERE hc.campaign_status != '-' AND hc.campaign_start_date > '2000-01-01' ORDER BY hc.campaign_start_date DESC LIMIT 5`);
     return rows;
   },
   async getRecentSubscribers() {
-    const [rows] = await pool.query(`SELECT subscriberId, CONCAT(firstname, ' ', lastname) as fullname, email, country, timestamp as join_date FROM subscribers WHERE confirmed = 1 ORDER BY timestamp DESC LIMIT 5`);
+    const rows = await remoteQuery(`SELECT subscriberId, CONCAT(firstname, ' ', lastname) as fullname, email, country, timestamp as join_date FROM subscribers WHERE confirmed = 1 ORDER BY timestamp DESC LIMIT 5`);
     return rows;
   },
   
@@ -86,7 +86,7 @@ const Controller = {
   // Campaign Cost Summary - optimized for large datasets
   async getCampaignCostSummary(page = 1, limit = 50) {
     const offset = (page - 1) * limit;
-    const [rows] = await pool.query(`
+    const rows = await remoteQuery(`
       SELECT 
       campaign_name,
         campaign_cost,
@@ -104,7 +104,7 @@ const Controller = {
   
   // Get total count for pagination
   async getCampaignCostSummaryCount() {
-    const [rows] = await pool.query(`
+    const rows = await remoteQuery(`
       SELECT COUNT(DISTINCT CONCAT(campaign_cost, currency)) as total_count
       FROM herald_campaign 
       WHERE approval = 1
@@ -115,7 +115,7 @@ const Controller = {
   // Givings Data - optimized with pagination
   async getGivingsData(page = 1, limit = 100) {
     const offset = (page - 1) * limit;
-    const [rows] = await pool.query(`
+    const rows = await remoteQuery(`
       SELECT 
         hc.cId,
         hc.campaign_name,
@@ -142,7 +142,7 @@ const Controller = {
   
   // Get total count for givings data pagination
   async getGivingsDataCount() {
-    const [rows] = await pool.query(`
+    const rows = await remoteQuery(`
       SELECT COUNT(*) as total_count
       FROM herald_campaign 
       WHERE approval = 1
@@ -153,7 +153,7 @@ const Controller = {
   // Zone-based analysis - optimized
   async getGivingsByZonesWithMapping(page = 1, limit = 50) {
     const offset = (page - 1) * limit;
-    const [rows] = await pool.query(`
+    const rows = await remoteQuery(`
       SELECT 
         hc.zoneId,
         SUM(hc.campaign_cost) as total_givings,
@@ -176,7 +176,7 @@ const Controller = {
   
   // Get total count for zones pagination
   async getGivingsByZonesCount() {
-    const [rows] = await pool.query(`
+    const rows = await remoteQuery(`
       SELECT COUNT(DISTINCT CONCAT(hc.zoneId, hc.currency)) as total_count
       FROM herald_campaign hc
       WHERE hc.approval = 1
@@ -187,7 +187,7 @@ const Controller = {
   // Cumulative giving per herald - optimized
   async getCumulativeGivingPerHerald(page = 1, limit = 100) {
     const offset = (page - 1) * limit;
-    const [rows] = await pool.query(`
+    const rows = await remoteQuery(`
       SELECT 
         hc.subscriberId,
         CONCAT(COALESCE(s.firstname, ''), ' ', COALESCE(s.lastname, '')) as herald_name,
@@ -208,7 +208,7 @@ const Controller = {
   
   // Get total count for cumulative giving pagination
   async getCumulativeGivingCount() {
-    const [rows] = await pool.query(`
+    const rows = await remoteQuery(`
       SELECT COUNT(DISTINCT subscriberId) as total_count
       FROM herald_campaign 
       WHERE approval = 1
@@ -218,7 +218,7 @@ const Controller = {
   
   // Total campaign costs - optimized
   async getTotalCampaignCosts() {
-    const [rows] = await pool.query(`
+    const rows = await remoteQuery(`
       SELECT 
         currency,
         SUM(campaign_cost) as total_cost,
@@ -234,7 +234,7 @@ const Controller = {
   // Timeline of all givings - optimized with pagination
   async getGivingsTimeline(page = 1, limit = 100) {
     const offset = (page - 1) * limit;
-    const [rows] = await pool.query(`
+    const rows = await remoteQuery(`
       SELECT 
         hc.cId,
         hc.campaign_name,
@@ -259,7 +259,7 @@ const Controller = {
   
   // Get total count for timeline pagination
   async getGivingsTimelineCount() {
-    const [rows] = await pool.query(`
+    const rows = await remoteQuery(`
       SELECT COUNT(*) as total_count
       FROM herald_campaign 
       WHERE approval = 1
